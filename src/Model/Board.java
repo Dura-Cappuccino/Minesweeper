@@ -1,20 +1,24 @@
 package Model;
 
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+
 import java.util.Random;
 
 public class Board {
     private int height;
     private int width;
     private int minecount; //number of total mines on the board
-    private int minesleft; //number of unflagged mines left
+    private SimpleIntegerProperty minesLeftModel;; //number of unflagged mines left
     private int cellsleft; //number of unopened cells left
     private Cell[][] board; //used to display # of mines left
+
 
     public Board(int height, int width, int minecount){
         this.height = height;
         this.width = width;
         this.minecount = minecount;
-        this.minesleft = minecount;
+        this.minesLeftModel = new SimpleIntegerProperty(minecount);
         this.cellsleft = height * width;
 
         board = new Cell[height][width];
@@ -74,10 +78,10 @@ public class Board {
             return;
         } else if(!board[r][c].getFlagged()) {
             board[r][c].setFlagged(true);
-            minesleft--;
+            minesLeftModel.set(minesLeftModel.get() - 1);
         } else {
             board[r][c].setFlagged(false);
-            minesleft++;
+            minesLeftModel.set(minesLeftModel.get() + 1);
         }
     }
 
@@ -221,7 +225,7 @@ public class Board {
     }
 
     public void printPlay() {
-        System.out.println("Mines-left: " + minesleft + ", Cells-left: " + cellsleft);
+        System.out.println("Mines-left: " + minesLeftModel.get() + ", Cells-left: " + cellsleft);
         for(int r= 0; r < height; r++) {
             for(int c= 0; c < width; c++) {
                 if(board[r][c].getFlagged())
@@ -239,5 +243,15 @@ public class Board {
             }
             System.out.println();
         }
+    }
+
+    // --------------------------------- GUI Ref Properties -------------------------------------
+
+    public SimpleIntegerProperty minesLeftProperty() {
+        return minesLeftModel;
+    }
+
+    public SimpleStringProperty valueProperty(int r, int c) {
+        return board[r][c].valueProperty();
     }
 }

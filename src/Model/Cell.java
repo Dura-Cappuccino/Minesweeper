@@ -1,5 +1,7 @@
 package Model;
 
+import javafx.beans.property.SimpleStringProperty;
+
 public class Cell {
     /**
      * Var fields:
@@ -11,11 +13,14 @@ public class Cell {
     private boolean flipped;
     private boolean flagged; //Note: only used for mine countdown, doesn't affect ending
 
+    private SimpleStringProperty valueModel;
+
     public Cell() {
         this.mine = false;
         this.value = 0;
         this.flipped = false;
         this.flagged = false;
+        valueModel = new SimpleStringProperty(" ");
     }
 
     protected void setMine() {
@@ -26,15 +31,26 @@ public class Cell {
         value++;
     }
 
-    protected void setFlipped() { //FIXME: How to resolve flag status?
+    protected void setFlipped() {
         flipped = true;
+        //GUI bind-property requires this
+        if (mine)
+            valueModel.set("*");
+        else if (value == 0)
+            valueModel.set("+");
+        else
+            valueModel.set(Integer.toString(value));
     }
 
     protected void setFlagged(boolean toggle) {
         flagged = toggle;
+        if(flagged)
+            valueModel.set("F");
+        else
+            valueModel.set(" ");
     }
 
-    protected boolean getMine() { //TODO: revert back to if-then
+    protected boolean getMine() {
         return mine;
     }
 
@@ -42,11 +58,15 @@ public class Cell {
         return value;
     }
 
-    protected boolean getFlipped() { //TODO: revert back to if-then
+    protected boolean getFlipped() {
         return flipped;
     }
 
     protected boolean getFlagged() {
         return flagged;
+    }
+
+    protected SimpleStringProperty valueProperty() {
+        return valueModel;
     }
 }

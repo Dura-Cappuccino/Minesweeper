@@ -1,13 +1,14 @@
 package Control;
 
 import java.util.Scanner;
-import Model.*;
+import Config.Config;
+import Model.Board;
 
-public class Game {
+public class GameCLI {
 
     Board playboard;
 
-    public Game(int height, int width, int mines) {
+    public GameCLI(int height, int width, int mines) {
         playboard = new Board(height, width, mines);
     }
 
@@ -47,8 +48,7 @@ public class Game {
     }
 
     //internal helper function that calls board & tells what kind of move
-    //returns false if mine is flipped
-    //returns true otherwise
+    //returns false if mine is flipped & true otherwise
     private boolean makeMove(int row, int col, int click) {
         switch(click) {
             case 0:
@@ -61,5 +61,14 @@ public class Game {
             default:
                 return true;
         }
+    }
+    public static void main(String[] args) {
+        Config.readConfig();
+        int height = Config.getHeight();
+        int width = Config.getWidth();
+        int mines = Config.getMines();
+
+        GameCLI newgame = new GameCLI(height, width, mines);
+        newgame.play();
     }
 }
