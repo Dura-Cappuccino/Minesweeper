@@ -1,42 +1,108 @@
 package Config;
 
-import java.io.FileReader;
+import java.io.*;
 import java.util.Properties;
 
 public class Config {
 
-    static int height;
-    static int width;
-    static int mines;
-    static String theme;
+    private static int height;
+    private static int width;
+    private static int mines;
+    private static String level;
+    private static boolean sound;
+    private static boolean theme;
 
     public static void readConfig() {
-        try (FileReader reader = new FileReader("src/Config/settings")) {
+        try (FileInputStream settingsReader = new FileInputStream("src/Config/settings")) {
             Properties properties = new Properties();
-            properties.load(reader);
+            properties.load(settingsReader);
 
-            height = Integer.parseInt(properties.getProperty("height"));
-            width = Integer.parseInt(properties.getProperty("width"));
-            mines = Integer.parseInt(properties.getProperty("mines"));
-            theme = properties.getProperty("theme");
+            level = properties.getProperty("level");
+            String[] temp;
+            if(level.equalsIgnoreCase("custom"))
+                temp = properties.getProperty("custom").split(",");
+            else
+                temp = getLevelPreset(level.toLowerCase());
+
+            height = Integer.parseInt(temp[0]);
+            width = Integer.parseInt(temp[1]);
+            mines = Integer.parseInt(temp[2]);
+
+            if(properties.getProperty("sound").equals("On"))
+                sound = true;
+            else
+                sound = false;
+
+            if(properties.getProperty("theme").equals("Dark"))
+                theme = true;
+            else
+                theme = false;
         } catch (Exception e) {
             System.out.println("Error reading configuration file.");
         }
     }
 
-    private static void writeConfig(int h, int w, int m, String t) {
-        height = h;
-        width = w;
-        mines = m;
+    public static void saveConfig(String l, int h, int w, int m, boolean s, boolean t) {
+        sound = s;
         theme = t;
+        level = l;
 
-        try {
-            //TODO: write entered values to config file
-
-        } catch (Exception e) {
-            System.out.println("cannot write configurations.\n" +
-                    "Are you sure your settings are entered correctly?\n");
+        if(!level.equalsIgnoreCase("custom")) {
+            try (FileInputStream levelsReader = new FileInputStream("src/Config/level_definitions")) {
+                Properties properties = new Properties();
+                properties.load(levelsReader);
+                properties.getProperty(level.toLowerCase());
+                String[] temp = getLevelPreset(level.toLowerCase());
+                height = Integer.parseInt(temp[0]);
+                width = Integer.parseInt(temp[1]);
+                mines = Integer.parseInt(temp[2]);
+            } catch(Exception e) {
+                System.out.println("Unable to read level presets.");
+            }
+        } else {
+            height = h;
+            width = w;
+            mines = m;
         }
+    }
+
+    public static void writeConfig() throws IOException {
+        FileOutputStream settingsWriter = new FileOutputStream("src/Config/settings");
+        Properties properties = new Properties();
+
+        /* level=Medium
+        custom=0
+        sound=On
+        theme=Light*/
+
+        /*easy=9,9,10
+        medium=16,16,40
+        hard=16,30,99*/
+        properties.setProperty("level", level);
+        if(level.equalsIgnoreCase("custom")) {
+            properties.setProperty("custom", height + "," + width + "," + mines);
+        } else
+            properties.setProperty("custom", "0");
+
+        if(sound)
+            properties.setProperty("sound", "On");
+        else
+            properties.setProperty("sound", "Off");
+
+        if(theme)
+            properties.setProperty("theme", "Dark");
+        else
+            properties.setProperty("theme", "Light");
+
+        properties.store(settingsWriter, null);
+
+    }
+
+    private static String[] getLevelPreset(String levelStr) throws IOException {
+        FileInputStream levelReader = new FileInputStream("src/Config/level_definitions");
+        Properties properties = new Properties();
+        properties.load(levelReader);
+        return properties.getProperty(levelStr).split(",");
     }
 
     public static int getHeight() {
@@ -51,7 +117,15 @@ public class Config {
         return mines;
     }
 
-    public static String getTheme() {
+    public static String getLevel() {
+        return level;
+    }
+
+    public static boolean getSound() {
+        return sound;
+    }
+
+    public static boolean getTheme() {
         return theme;
     }
 }

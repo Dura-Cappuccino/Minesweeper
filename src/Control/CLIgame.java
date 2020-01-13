@@ -4,11 +4,11 @@ import java.util.Scanner;
 import Config.Config;
 import Model.Board;
 
-public class GameCLI {
+public class CLIgame {
 
     Board playboard;
 
-    public GameCLI(int height, int width, int mines) {
+    public CLIgame(int height, int width, int mines) {
         playboard = new Board(height, width, mines);
     }
 
@@ -68,7 +68,7 @@ public class GameCLI {
         int width = Config.getWidth();
         int mines = Config.getMines();
 
-        GameCLI newgame = new GameCLI(height, width, mines);
+        CLIgame newgame = new CLIgame(height, width, mines);
         newgame.play();
     }
 }
