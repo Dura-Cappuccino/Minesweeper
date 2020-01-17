@@ -1,0 +1,7 @@
+.idea/*
+Minesweeper.iml
+implementation_notes.txt
+out/*
+*.DS_Store
+src/Assets/.DS_Store
+src/View/.DS_Store

@@ -2,17 +2,13 @@ package Control;
 
 import Config.Config;
 import Model.Board;
-import javafx.animation.Animation;
-import javafx.animation.KeyFrame;
-import javafx.animation.PathTransition;
-import javafx.animation.Timeline;
+import javafx.animation.*;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.Bounds;
-import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -22,7 +18,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
-import  javafx.scene.shape.Line;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Duration;
@@ -44,16 +39,19 @@ public class GUIgame extends Application implements Initializable {
     @FXML
     private Label clockLabel;
     @FXML
-    private Label gameLabel;
-    @FXML
-    private GridPane boardView;
+    private StackPane gameView;
     @FXML
     private StackPane mainView;
     @FXML
     private AnchorPane overlayView;
 
+    private GridPane boardView;
+    private Label gameLabel;
+
     private static final int cellDimension = 30;
-    private static final int inset = 10;
+    private static final int inset = 20;
+    private static final int minWH = 370;
+    private static final int minWW = 320;
     private static int[] window = {10, 10};
 
     boolean gamecont;
@@ -75,7 +73,6 @@ public class GUIgame extends Application implements Initializable {
 
         primaryStage.setTitle("Minesweeper");
 
-        //System.out.println("height: " + window[0] + ", width: " + window[1]);
         primaryStage.setScene(new Scene(root, window[1], window[0]));
         //primaryStage.setResizable(false);
 
@@ -110,7 +107,7 @@ public class GUIgame extends Application implements Initializable {
 
         resetButton.setOnMousePressed((MouseEvent e) -> {
             timer.stop();
-            boardView.getChildren().clear();
+            gameView.getChildren().clear();
             clockLabel.setText("000");
             initNew(Config.getHeight(), Config.getWidth(), Config.getMines());
             Stage stage = (Stage)((Node)e.getSource()).getScene().getWindow();
@@ -122,31 +119,52 @@ public class GUIgame extends Application implements Initializable {
     }
 
     private void initNew(int height, int width, int mines) {
+        //create game message
+        gameLabel = new Label("Message");
         gameLabel.setVisible(false);
+        StackPane.setAlignment(gameLabel, Pos.TOP_CENTER);
 
         //calculate window dimensions for this game
-        window[0] = height * cellDimension + 2 * inset;
-        //FIXME: window resizing on conditional statements is a bug!
-        /*if(Config.getHeight() < 16)
-            window[0] += 20 - 4 * (height - 10);*/
-        window[1] = width * cellDimension + 2 * inset;
+        int calcDim = height * cellDimension + 2 * inset + 50;
+        window[0] = calcDim >= minWH ? calcDim : minWH;
+        calcDim = width * cellDimension + 2 * inset;
+        window[1] = calcDim >= minWH ? calcDim : minWW;
 
-        //create view
-        firstmove = true;
+        //create model
         model = new Board(height, width, mines);
         model.printSolution();
+
+        //initialize game control variables
         gamecont = false;
+        firstmove = true;
         won = false;
-        boardView.setPadding(new Insets(inset));
+
+        //create view
+        boardView = new GridPane();
+        boardView.setAlignment(Pos.CENTER);
+        //FIXME: boardView.prefWidthProperty().bind(testStack.widthProperty());
+        //FIXME: boardView.prefHeightProperty().bind(testStack.heightProperty());
+
+        for(int c=0; c < width; c++) {
+            ColumnConstraints grow = new ColumnConstraints();
+            grow.setHgrow(Priority.ALWAYS);
+        }
+        for(int r=0; r < height; r++) {
+            RowConstraints grow = new RowConstraints();
+            grow.setVgrow(Priority.ALWAYS);
+        }
+
 
         for(int r=0; r < height; r++) {
             for(int c=0; c < width; c++) {
 
                 Button cell = new Button();
+                cell.setMinHeight(cellDimension);
                 cell.setMinWidth(cellDimension);
-                cell.setMaxWidth(cellDimension);
-                cell.setMinWidth(cellDimension);
-                cell.setMaxWidth(cellDimension);
+                cell.setMaxHeight(Double.POSITIVE_INFINITY);
+                cell.setMaxWidth(Double.POSITIVE_INFINITY);
+                GridPane.setFillWidth(cell, true);
+                GridPane.setFillHeight(cell, true);
                 cell.textProperty().set("-fx-font-weight: bold;");
                 cell.textProperty().bind(model.valueProperty(r, c));
 
@@ -181,16 +199,14 @@ public class GUIgame extends Application implements Initializable {
                 boardView.add(cell, c, r);
             }
         }
-        /*for (int r = 0; r < width; r++) {
-            ColumnConstraints column = new ColumnConstraints(cellDimension);
-            boardView.getColumnConstraints().add(column);
-        }
-        for (int c = 0; c < width; c++) {
-            RowConstraints row = new RowConstraints(cellDimension);
-            boardView.getRowConstraints().add(row);
-        }*/
+        //TESTCODE, change upon adding theme settings
         boardView.setStyle("-fx-background-color: darkgrey;");
         boardView.setStyle("-fx-grid-lines-visible: true;");
+        gameLabel.setStyle("-fx-font-size: 26; -fx-background-color: pink;");
+
+        gameView.getChildren().add(boardView);
+        gameView.getChildren().add(gameLabel);
+
 
         //bind minecount
         mineLabel.textProperty().bind(model.minesLeftProperty().asString());
@@ -206,22 +222,17 @@ public class GUIgame extends Application implements Initializable {
             node.setDisable(true);
         }
 
-        Bounds boardViewBounds = boardView.localToScene(boardView.getBoundsInLocal());
-        Bounds gameLabelBounds = gameLabel.localToScene(gameLabel.getBoundsInLocal());
-        Line line = new Line(gameLabelBounds.getMinX(), gameLabelBounds.getMinY(),
-                gameLabelBounds.getMinX(), boardViewBounds.getMinY() + boardViewBounds.getHeight()/2);
-        PathTransition transition = new PathTransition();
-        transition.setNode(gameLabel);
-        transition.setDuration(Duration.seconds(2));
-        transition.setPath(line);
+        //Show End Game Message and animation
+        TranslateTransition transition = new TranslateTransition(Duration.seconds(2), gameLabel);
+        transition.setToY(gameView.getHeight()/2 - 10);
 
         if(!won)
             gameLabel.setText("You Lost");
         else
             gameLabel.setText("You Won");
 
-        transition.play();
         gameLabel.setVisible(true);
+        transition.play();
     }
 
     private void incrementClock() {
